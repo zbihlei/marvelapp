@@ -2,16 +2,17 @@ import './singleComicPage.scss';
 import {useParams, Link} from 'react-router-dom'
 import { useState, useEffect } from 'react';
 import useMarvelService from '../../services/MarvelService';
-import Spinner from '../spinner/Spinner';
-import ErrorMessage from '../errorMessage/ErrorMessage';
 import AppBanner from "../appBanner/AppBanner";
+import {Helmet} from 'react-helmet';
+import setContent from '../../utils/setContent';
+
 
 
 const SingleComicPage = () => {
 
     const {comicId} =useParams();
     const [comic, setComic] = useState(null);
-    const {loading,error,getComic,clearError} = useMarvelService();
+    const {getComic,clearError, process,setProcess} = useMarvelService();
 
 
     useEffect(()=>{
@@ -22,7 +23,9 @@ const SingleComicPage = () => {
     const updateComic = ()=>{
         clearError();
         getComic(comicId)
-            .then(onComicLoaded);
+            .then(onComicLoaded)
+            .then(() =>setProcess('confirmed'));
+
 
     }
 
@@ -30,27 +33,27 @@ const SingleComicPage = () => {
         setComic(comic);
     }
 
-    const errorMessage = error ? <ErrorMessage/> : null;
-    const spinner = loading ? <Spinner/> : null;
-    const content = !(loading || error || !comic) ? <View comic={comic}/> : null;
-
-
     return (
        <>
        <AppBanner/>
-        {errorMessage}
-        {spinner}
-        {content}
+        {setContent(process, View, comic)}
        </>
     )
 }
 
-const View = ({comic}) =>{
+const View = ({data}) =>{
 
-    const {title, description,pageCount,thumbnail,langauge,price} = comic;
+    const {title, description,pageCount,thumbnail,langauge,price} = data;
 
     return (
         <div className="single-comic">
+      <Helmet>
+     <meta
+      name="description"
+      content={`${title} comics book`}
+      />
+         <title>{title}</title>
+      </Helmet>
         <img src={thumbnail} alt={title} className="single-comic__img"/>
         <div className="single-comic__info">
             <h2 className="single-comic__name">{title}</h2>

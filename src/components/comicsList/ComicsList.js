@@ -7,9 +7,28 @@ import ErrorMessage from '../errorMessage/ErrorMessage';
 import Spinner from '../spinner/Spinner';
 import { Link } from 'react-router-dom'
 
+const setContent = (process, Component, newItemLoading)=>{
+    switch (process) {
+        case 'waiting':
+            return <Spinner/>;
+        
+        case 'loading':
+            return newItemLoading ? <Component/>: <Spinner/>;
+        
+        case 'confirmed':
+            return <Component/>;
+        
+        case 'error':
+            return <ErrorMessage/>;
+        
+        default:
+            throw new Error('Unexpected process state');
+    }  
+}
+
 const ComicsList = (props) => {
 
-    const {loading, error, getAllComics} = useMarvelService();
+    const {getAllComics, process, setProcess} = useMarvelService();
 
     const [comicsList, setComicsList] = useState([]);
     const [newItemLoading, setNewItemLoading] = useState(false);
@@ -24,7 +43,9 @@ const ComicsList = (props) => {
     const onRequest = (offset, initial) => {
         initial ?  setNewItemLoading (false): setNewItemLoading (true);
         getAllComics(offset)
-            .then(onComicsLoaded);
+            .then(onComicsLoaded)
+            .then(() => setProcess('confirmed'));
+
             
     }
 
@@ -68,16 +89,12 @@ const ComicsList = (props) => {
         )
     }
 
-        const items = renderItems(comicsList); 
-
-        const errorMessage = error ? <ErrorMessage/> : null;
-        const spinner = loading && !newItemLoading ? <Spinner/> : null;
 
         return (
             <div className="comics__list">
-                    {errorMessage}
-                    {spinner}
-                    {items}
+
+        {setContent(process, () => renderItems(comicsList), newItemLoading)}
+                
                 <button className="button button__main button__long"
                          disabled={newItemLoading}
                          style={{'display': comicsEnded ? 'none' : 'block'}}
